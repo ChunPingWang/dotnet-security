@@ -54,31 +54,31 @@ rbac-sso-poc-dotnet/
 
 ### Domain Common Infrastructure
 
-- [ ] T013 [P] Implement IDomainEvent interface in src/Shared/RbacSso.Common/Domain/IDomainEvent.cs
-- [ ] T014 [P] Implement DomainEventBase record in src/Shared/RbacSso.Common/Domain/DomainEventBase.cs
-- [ ] T015 [P] Implement AggregateRoot<TId> base class in src/Shared/RbacSso.Common/Domain/AggregateRoot.cs
-- [ ] T016 [P] Implement DomainException base class in src/Shared/RbacSso.Common/Exceptions/DomainException.cs
-- [ ] T017 [P] Implement ApiResponse and ErrorResponse DTOs in src/Shared/RbacSso.Common/Responses/
+- [X] T013 [P] Implement IDomainEvent interface in src/Shared/RbacSso.Common/Domain/IDomainEvent.cs
+- [X] T014 [P] Implement DomainEventBase record in src/Shared/RbacSso.Common/Domain/DomainEventBase.cs
+- [X] T015 [P] Implement AggregateRoot<TId> base class in src/Shared/RbacSso.Common/Domain/AggregateRoot.cs
+- [X] T016 [P] Implement DomainException base class in src/Shared/RbacSso.Common/Exceptions/DomainException.cs
+- [X] T017 [P] Implement ApiResponse and ErrorResponse DTOs in src/Shared/RbacSso.Common/Responses/
 
 ### Security & Multi-Tenancy
 
-- [ ] T018 [P] Implement ITenantContext interface in src/Shared/RbacSso.Tenant/ITenantContext.cs
-- [ ] T019 [P] Implement TenantMiddleware in src/Shared/RbacSso.Tenant/TenantMiddleware.cs
-- [ ] T020 [P] Implement JwtClaimsPrincipalParser in src/Shared/RbacSso.Security/Authentication/JwtClaimsPrincipalParser.cs
-- [ ] T021 [P] Implement Roles constants class in src/Shared/RbacSso.Security/Authorization/Roles.cs
-- [ ] T022 [P] Implement RbacAuthorizationHandler in src/Shared/RbacSso.Security/Authorization/RbacAuthorizationHandler.cs
-- [ ] T023 Implement CorrelationIdMiddleware in src/Shared/RbacSso.Common/Middleware/CorrelationIdMiddleware.cs
+- [X] T018 [P] Implement ITenantContext interface in src/Shared/RbacSso.Tenant/ITenantContext.cs
+- [X] T019 [P] Implement TenantMiddleware in src/Shared/RbacSso.Tenant/TenantMiddleware.cs
+- [X] T020 [P] Implement JwtClaimsPrincipalParser in src/Shared/RbacSso.Security/Authentication/JwtClaimsPrincipalParser.cs
+- [X] T021 [P] Implement Roles constants class in src/Shared/RbacSso.Security/Authorization/Roles.cs
+- [X] T022 [P] Implement RbacAuthorizationHandler in src/Shared/RbacSso.Security/Authorization/RbacAuthorizationHandler.cs
+- [X] T023 Implement CorrelationIdMiddleware in src/Shared/RbacSso.Common/Middleware/CorrelationIdMiddleware.cs
 
 ### Gateway Setup
 
-- [ ] T024 Configure YARP routes in src/Services/RbacSso.Gateway/yarp.json
-- [ ] T025 Configure JWT Bearer authentication in src/Services/RbacSso.Gateway/Program.cs
-- [ ] T026 Add rate limiting middleware in src/Services/RbacSso.Gateway/Program.cs
+- [X] T024 Configure YARP routes in src/Services/RbacSso.Gateway/yarp.json
+- [X] T025 Configure JWT Bearer authentication in src/Services/RbacSso.Gateway/Program.cs
+- [X] T026 Add rate limiting middleware in src/Services/RbacSso.Gateway/Program.cs
 
 ### Architecture Tests
 
-- [ ] T027 [P] Implement Domain_Should_Not_Depend_On_Infrastructure test in tests/RbacSso.ArchitectureTests/LayerDependencyTests.cs
-- [ ] T028 [P] Implement DomainEvents_Should_Implement_IDomainEvent test in tests/RbacSso.ArchitectureTests/DomainEventTests.cs
+- [X] T027 [P] Implement Domain_Should_Not_Depend_On_Infrastructure test in tests/RbacSso.ArchitectureTests/LayerDependencyTests.cs
+- [X] T028 [P] Implement DomainEvents_Should_Implement_IDomainEvent test in tests/RbacSso.ArchitectureTests/DomainEventTests.cs
 
 **Checkpoint**: Foundation ready - user story implementation can now begin
 
