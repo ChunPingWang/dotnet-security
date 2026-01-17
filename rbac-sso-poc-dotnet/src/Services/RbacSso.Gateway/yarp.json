@@ -1,0 +1,105 @@
+{
+  "ReverseProxy": {
+    "Routes": {
+      "products-route": {
+        "ClusterId": "product-service",
+        "AuthorizationPolicy": "default",
+        "Match": {
+          "Path": "/api/products/{**catch-all}"
+        },
+        "Transforms": [
+          {
+            "PathRemovePrefix": "/api"
+          }
+        ]
+      },
+      "users-route": {
+        "ClusterId": "user-service",
+        "AuthorizationPolicy": "default",
+        "Match": {
+          "Path": "/api/users/{**catch-all}"
+        },
+        "Transforms": [
+          {
+            "PathRemovePrefix": "/api"
+          }
+        ]
+      },
+      "audit-route": {
+        "ClusterId": "audit-service",
+        "AuthorizationPolicy": "default",
+        "Match": {
+          "Path": "/api/audit/{**catch-all}"
+        },
+        "Transforms": [
+          {
+            "PathRemovePrefix": "/api"
+          }
+        ]
+      },
+      "auth-route": {
+        "ClusterId": "gateway",
+        "Match": {
+          "Path": "/api/auth/{**catch-all}"
+        }
+      }
+    },
+    "Clusters": {
+      "product-service": {
+        "Destinations": {
+          "product-service-1": {
+            "Address": "http://localhost:8081/"
+          }
+        },
+        "HealthCheck": {
+          "Active": {
+            "Enabled": true,
+            "Interval": "00:00:10",
+            "Timeout": "00:00:05",
+            "Policy": "ConsecutiveFailures",
+            "Path": "/health"
+          }
+        }
+      },
+      "user-service": {
+        "Destinations": {
+          "user-service-1": {
+            "Address": "http://localhost:8082/"
+          }
+        },
+        "HealthCheck": {
+          "Active": {
+            "Enabled": true,
+            "Interval": "00:00:10",
+            "Timeout": "00:00:05",
+            "Policy": "ConsecutiveFailures",
+            "Path": "/health"
+          }
+        }
+      },
+      "audit-service": {
+        "Destinations": {
+          "audit-service-1": {
+            "Address": "http://localhost:8083/"
+          }
+        },
+        "HealthCheck": {
+          "Active": {
+            "Enabled": true,
+            "Interval": "00:00:10",
+            "Timeout": "00:00:05",
+            "Policy": "ConsecutiveFailures",
+            "Path": "/health"
+          }
+        }
+      },
+      "gateway": {
+        "Destinations": {
+          "self": {
+            "Address": "http://localhost:8080/"
+          }
+        }
+      }
+    }
+  }
+}
