@@ -2,10 +2,22 @@
 
 ## RBAC-SSO-POC (.NET Core 版)
 
-**版本**: 1.0  
-**日期**: 2025-01-11  
-**狀態**: Draft  
+**版本**: 1.1
+**日期**: 2026-01-17
+**狀態**: Planning Complete
 **稽核機制**: Domain Events
+
+### 規劃文件
+
+| 文件 | 路徑 | 狀態 |
+|------|------|------|
+| 功能規格 | `specs/001-rbac-sso-poc/spec.md` | ✅ Complete |
+| 實作計畫 | `specs/001-rbac-sso-poc/plan.md` | ✅ Complete |
+| 任務清單 | `specs/001-rbac-sso-poc/tasks.md` | ✅ 125 tasks |
+| 資料模型 | `specs/001-rbac-sso-poc/data-model.md` | ✅ Complete |
+| API 契約 | `specs/001-rbac-sso-poc/contracts/openapi.yaml` | ✅ Complete |
+| 快速開始 | `specs/001-rbac-sso-poc/quickstart.md` | ✅ Complete |
+| 分析報告 | `specs/001-rbac-sso-poc/001-rbac-sso-poc.md` | ✅ All issues resolved |
 
 ---
 

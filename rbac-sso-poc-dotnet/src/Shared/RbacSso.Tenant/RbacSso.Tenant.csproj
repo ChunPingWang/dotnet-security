@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <RootNamespace>RbacSso.Tenant</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Finbuckle.MultiTenant" Version="7.0.2" />
+    <PackageReference Include="Finbuckle.MultiTenant.AspNetCore" Version="7.0.2" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\RbacSso.Common\RbacSso.Common.csproj" />
+    <ProjectReference Include="..\RbacSso.Security\RbacSso.Security.csproj" />
+  </ItemGroup>
+
+</Project>

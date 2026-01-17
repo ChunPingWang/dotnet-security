@@ -1,0 +1,23 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <RootNamespace>RbacSso.ProductService</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="MediatR" Version="12.2.0" />
+    <PackageReference Include="FluentValidation.DependencyInjectionExtensions" Version="11.9.0" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="8.0.0" />
+    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="8.0.0" />
+    <PackageReference Include="Swashbuckle.AspNetCore" Version="6.5.0" />
+    <PackageReference Include="Serilog.AspNetCore" Version="8.0.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\Shared\RbacSso.Common\RbacSso.Common.csproj" />
+    <ProjectReference Include="..\..\Shared\RbacSso.Security\RbacSso.Security.csproj" />
+    <ProjectReference Include="..\..\Shared\RbacSso.Tenant\RbacSso.Tenant.csproj" />
+    <ProjectReference Include="..\..\Shared\RbacSso.Audit\RbacSso.Audit.csproj" />
+  </ItemGroup>
+
+</Project>
