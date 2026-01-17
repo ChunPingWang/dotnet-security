@@ -1,0 +1,216 @@
+{
+  "realm": "ecommerce",
+  "enabled": true,
+  "registrationAllowed": false,
+  "loginWithEmailAllowed": true,
+  "duplicateEmailsAllowed": false,
+  "resetPasswordAllowed": true,
+  "editUsernameAllowed": false,
+  "bruteForceProtected": true,
+  "sslRequired": "external",
+  "accessTokenLifespan": 300,
+  "ssoSessionIdleTimeout": 1800,
+  "ssoSessionMaxLifespan": 36000,
+  "roles": {
+    "realm": [
+      {
+        "name": "ADMIN",
+        "description": "System administrator with full access"
+      },
+      {
+        "name": "TENANT_ADMIN",
+        "description": "Tenant administrator"
+      },
+      {
+        "name": "USER",
+        "description": "Regular user"
+      },
+      {
+        "name": "VIEWER",
+        "description": "Read-only user"
+      }
+    ]
+  },
+  "users": [
+    {
+      "username": "admin",
+      "enabled": true,
+      "email": "admin@example.com",
+      "firstName": "System",
+      "lastName": "Admin",
+      "credentials": [
+        {
+          "type": "password",
+          "value": "admin",
+          "temporary": false
+        }
+      ],
+      "realmRoles": ["ADMIN"],
+      "attributes": {
+        "tenant_id": ["system"]
+      }
+    },
+    {
+      "username": "tenant-a-admin",
+      "enabled": true,
+      "email": "admin-a@example.com",
+      "firstName": "Tenant A",
+      "lastName": "Admin",
+      "credentials": [
+        {
+          "type": "password",
+          "value": "password",
+          "temporary": false
+        }
+      ],
+      "realmRoles": ["TENANT_ADMIN"],
+      "attributes": {
+        "tenant_id": ["tenant-a"]
+      }
+    },
+    {
+      "username": "tenant-b-admin",
+      "enabled": true,
+      "email": "admin-b@example.com",
+      "firstName": "Tenant B",
+      "lastName": "Admin",
+      "credentials": [
+        {
+          "type": "password",
+          "value": "password",
+          "temporary": false
+        }
+      ],
+      "realmRoles": ["TENANT_ADMIN"],
+      "attributes": {
+        "tenant_id": ["tenant-b"]
+      }
+    },
+    {
+      "username": "user-a",
+      "enabled": true,
+      "email": "user-a@example.com",
+      "firstName": "User",
+      "lastName": "A",
+      "credentials": [
+        {
+          "type": "password",
+          "value": "password",
+          "temporary": false
+        }
+      ],
+      "realmRoles": ["USER"],
+      "attributes": {
+        "tenant_id": ["tenant-a"]
+      }
+    },
+    {
+      "username": "viewer",
+      "enabled": true,
+      "email": "viewer@example.com",
+      "firstName": "Read Only",
+      "lastName": "User",
+      "credentials": [
+        {
+          "type": "password",
+          "value": "password",
+          "temporary": false
+        }
+      ],
+      "realmRoles": ["VIEWER"],
+      "attributes": {
+        "tenant_id": ["tenant-a"]
+      }
+    }
+  ],
+  "clients": [
+    {
+      "clientId": "gateway",
+      "enabled": true,
+      "clientAuthenticatorType": "client-secret",
+      "secret": "gateway-secret",
+      "redirectUris": [
+        "http://localhost:8080/*",
+        "https://localhost:8080/*"
+      ],
+      "webOrigins": ["*"],
+      "publicClient": false,
+      "protocol": "openid-connect",
+      "directAccessGrantsEnabled": true,
+      "standardFlowEnabled": true,
+      "implicitFlowEnabled": false,
+      "serviceAccountsEnabled": true,
+      "authorizationServicesEnabled": false,
+      "fullScopeAllowed": true,
+      "defaultClientScopes": [
+        "openid",
+        "profile",
+        "email",
+        "roles"
+      ],
+      "protocolMappers": [
+        {
+          "name": "tenant_id",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-usermodel-attribute-mapper",
+          "consentRequired": false,
+          "config": {
+            "user.attribute": "tenant_id",
+            "claim.name": "tenant_id",
+            "jsonType.label": "String",
+            "id.token.claim": "true",
+            "access.token.claim": "true",
+            "userinfo.token.claim": "true"
+          }
+        },
+        {
+          "name": "realm roles",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-usermodel-realm-role-mapper",
+          "consentRequired": false,
+          "config": {
+            "multivalued": "true",
+            "claim.name": "realm_access.roles",
+            "jsonType.label": "String",
+            "id.token.claim": "true",
+            "access.token.claim": "true",
+            "userinfo.token.claim": "true"
+          }
+        }
+      ]
+    }
+  ],
+  "components": {
+    "org.keycloak.storage.UserStorageProvider": [
+      {
+        "name": "ldap",
+        "providerId": "ldap",
+        "config": {
+          "enabled": ["true"],
+          "priority": ["0"],
+          "fullSyncPeriod": ["-1"],
+          "changedSyncPeriod": ["-1"],
+          "cachePolicy": ["DEFAULT"],
+          "editMode": ["READ_ONLY"],
+          "syncRegistrations": ["false"],
+          "vendor": ["other"],
+          "usernameLDAPAttribute": ["uid"],
+          "rdnLDAPAttribute": ["uid"],
+          "uuidLDAPAttribute": ["entryUUID"],
+          "userObjectClasses": ["inetOrgPerson, organizationalPerson"],
+          "connectionUrl": ["ldap://openldap:389"],
+          "usersDn": ["ou=users,dc=example,dc=org"],
+          "authType": ["simple"],
+          "bindDn": ["cn=admin,dc=example,dc=org"],
+          "bindCredential": ["admin"],
+          "searchScope": ["1"],
+          "useTruststoreSpi": ["ldapsOnly"],
+          "connectionPooling": ["true"],
+          "pagination": ["true"],
+          "batchSizeForSync": ["1000"],
+          "allowKerberosAuthentication": ["false"]
+        }
+      }
+    ]
+  }
+}
