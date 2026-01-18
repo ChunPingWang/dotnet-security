@@ -7,6 +7,7 @@
 - [專案概述](#專案概述)
 - [技術架構](#技術架構)
 - [系統架構圖](#系統架構圖)
+- [架構原則](#架構原則)
 - [資料模型 (ER Diagram)](#資料模型-er-diagram)
 - [類別圖](#類別圖)
 - [循序圖](#循序圖)
@@ -184,6 +185,50 @@
 │  └──────────────────────────┘    └──────────────────────────┘          │
 └─────────────────────────────────────────────────────────────────────────┘
 ```
+
+---
+
+## 架構原則
+
+### 依賴規則
+
+| 層級 | 可依賴 | 禁止依賴 |
+|------|--------|----------|
+| Domain | 無 | Application, Infrastructure, Api, 外部框架 |
+| Application | Domain | Infrastructure, Api |
+| Infrastructure | Application, Domain | Api |
+| Api | Infrastructure, Application, Domain | - |
+
+### Domain 層禁用的框架
+
+為確保領域層的純淨性，以下框架禁止在 Domain 層使用：
+
+- `Microsoft.EntityFrameworkCore`
+- `MediatR`
+- `Microsoft.AspNetCore`
+- `FluentValidation`
+- `Npgsql`
+- `System.Net.Http`
+- `Microsoft.Extensions.DependencyInjection`
+
+### Ports & Adapters
+
+**Ports（Application 層定義的介面）：**
+
+| Port | 說明 |
+|------|------|
+| `IProductRepository` | 產品聚合儲存庫 |
+| `IProductQueryRepository` | 產品查詢儲存庫（CQRS 讀取端） |
+| `IDomainEventDispatcher` | 領域事件發布 |
+| `ICurrentUserService` | 當前使用者資訊 |
+
+**Adapters（Infrastructure 層實作）：**
+
+| Adapter | 實作的 Port |
+|---------|-------------|
+| `ProductRepository` | `IProductRepository` (EF Core) |
+| `ProductQueryRepository` | `IProductQueryRepository` (EF Core) |
+| `MediatRDomainEventDispatcher` | `IDomainEventDispatcher` |
 
 ---
 
