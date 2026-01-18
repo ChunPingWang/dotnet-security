@@ -73,117 +73,112 @@
 
 ### 整體架構
 
-```
-┌─────────────────────────────────────────────────────────────────────────┐
-│                            Client Layer                                  │
-│  ┌─────────────┐    ┌─────────────┐    ┌─────────────┐                 │
-│  │ Web Browser │    │ Mobile App  │    │  API Client │                 │
-│  └──────┬──────┘    └──────┬──────┘    └──────┬──────┘                 │
-└─────────┼──────────────────┼──────────────────┼─────────────────────────┘
-          │                  │                  │
-          ▼                  ▼                  ▼
-┌─────────────────────────────────────────────────────────────────────────┐
-│                        API Gateway (YARP)                                │
-│                           :8080                                          │
-│  ┌────────────────────────────────────────────────────────────────────┐ │
-│  │  • JWT 驗證          • Rate Limiting      • Load Balancing         │ │
-│  │  • 路由轉發          • Request Logging    • Health Checks          │ │
-│  └────────────────────────────────────────────────────────────────────┘ │
-└────────────────────────────┬────────────────────────────────────────────┘
-                             │
-          ┌──────────────────┼──────────────────┐
-          │                  │                  │
-          ▼                  ▼                  ▼
-┌─────────────────┐ ┌─────────────────┐ ┌─────────────────┐
-│ Product Service │ │  User Service   │ │  Audit Service  │
-│     :8081       │ │     :8082       │ │     :8083       │
-│                 │ │                 │ │                 │
-│  ┌───────────┐  │ │  ┌───────────┐  │ │  ┌───────────┐  │
-│  │  Domain   │  │ │  │  Domain   │  │ │  │  Domain   │  │
-│  │  Events   │──┼─┼──│  Events   │──┼─┼──│  Handler  │  │
-│  └───────────┘  │ │  └───────────┘  │ │  └───────────┘  │
-└────────┬────────┘ └────────┬────────┘ └────────┬────────┘
-         │                   │                   │
-         ▼                   ▼                   ▼
-┌─────────────────────────────────────────────────────────────────────────┐
-│                         PostgreSQL Database                              │
-│  ┌─────────────┐    ┌─────────────┐    ┌─────────────┐                 │
-│  │  products   │    │    users    │    │ audit_logs  │                 │
-│  └─────────────┘    └─────────────┘    └─────────────┘                 │
-└─────────────────────────────────────────────────────────────────────────┘
+```mermaid
+graph TB
+    subgraph Clients["Client Layer"]
+        Browser[Web Browser]
+        Mobile[Mobile App]
+        APIClient[API Client]
+    end
 
-┌─────────────────────────────────────────────────────────────────────────┐
-│                      Authentication (Keycloak)                           │
-│                           :8180                                          │
-│  ┌────────────────────────────────────────────────────────────────────┐ │
-│  │  • OAuth2/OIDC       • LDAP Federation    • Realm: ecommerce       │ │
-│  │  • JWT 簽發          • User Management    • Client: gateway        │ │
-│  └────────────────────────────────────────────────────────────────────┘ │
-└─────────────────────────────────────────────────────────────────────────┘
+    subgraph Gateway["API Gateway - YARP :8080"]
+        GW[JWT 驗證 / Rate Limiting / Load Balancing<br/>路由轉發 / Request Logging / Health Checks]
+    end
+
+    subgraph Services["Microservices"]
+        subgraph PS["Product Service :8081"]
+            PS_Events[Domain Events]
+        end
+        subgraph US["User Service :8082"]
+            US_Events[Domain Events]
+        end
+        subgraph AS["Audit Service :8083"]
+            AS_Handler[Event Handler]
+        end
+    end
+
+    subgraph DB["PostgreSQL Database"]
+        Products[(products)]
+        Users[(users)]
+        AuditLogs[(audit_logs)]
+    end
+
+    subgraph Auth["Keycloak :8180"]
+        KC[OAuth2/OIDC / LDAP Federation<br/>JWT 簽發 / User Management]
+    end
+
+    Browser --> GW
+    Mobile --> GW
+    APIClient --> GW
+
+    GW --> PS
+    GW --> US
+    GW --> AS
+
+    PS_Events -.->|Domain Events| AS_Handler
+    US_Events -.->|Domain Events| AS_Handler
+
+    PS --> Products
+    US --> Users
+    AS --> AuditLogs
+
+    GW <-.->|認證| KC
 ```
 
 ### Hexagonal Architecture (六邊形架構)
 
-```
-┌─────────────────────────────────────────────────────────────────────────┐
-│                          PRESENTATION LAYER                              │
-│  ┌────────────────────────────────────────────────────────────────────┐ │
-│  │  Controllers / Middleware / DTOs                                   │ │
-│  │  • ProductCommandController      • ProductQueryController          │ │
-│  │  • AuthenticationController      • AuditController                 │ │
-│  └────────────────────────────────────────────────────────────────────┘ │
-└─────────────────────────────────────────────────────────────────────────┘
-                                    │
-                                    ▼
-┌─────────────────────────────────────────────────────────────────────────┐
-│                          APPLICATION LAYER                               │
-│  ┌──────────────────────────┐    ┌──────────────────────────┐          │
-│  │       Commands           │    │        Queries           │          │
-│  │  • CreateProductCommand  │    │  • GetProductByIdQuery   │          │
-│  │  • UpdateProductCommand  │    │  • ListProductsQuery     │          │
-│  │  • DeleteProductCommand  │    │  • GetAuditLogsQuery     │          │
-│  └──────────────────────────┘    └──────────────────────────┘          │
-│                                                                         │
-│  ┌────────────────────────────────────────────────────────────────────┐ │
-│  │                      MediatR Pipeline                              │ │
-│  │  • Logging Behavior • Validation Behavior • Transaction Behavior  │ │
-│  └────────────────────────────────────────────────────────────────────┘ │
-└─────────────────────────────────────────────────────────────────────────┘
-                                    │
-                                    ▼
-┌─────────────────────────────────────────────────────────────────────────┐
-│                            DOMAIN LAYER                                  │
-│  ┌──────────────────────────┐    ┌──────────────────────────┐          │
-│  │     Aggregates           │    │    Value Objects         │          │
-│  │  • Product               │    │  • ProductId             │          │
-│  │    - Create()            │    │  • ProductCode           │          │
-│  │    - Update()            │    │  • Money                 │          │
-│  │    - Delete()            │    │                          │          │
-│  └──────────────────────────┘    └──────────────────────────┘          │
-│                                                                         │
-│  ┌──────────────────────────┐    ┌──────────────────────────┐          │
-│  │    Domain Events         │    │    Interfaces (Ports)    │          │
-│  │  • ProductCreated        │    │  • IProductRepository    │          │
-│  │  • ProductUpdated        │    │  • IAuditLogRepository   │          │
-│  │  • ProductDeleted        │    │  • ITenantContext        │          │
-│  └──────────────────────────┘    └──────────────────────────┘          │
-└─────────────────────────────────────────────────────────────────────────┘
-                                    │
-                                    ▼
-┌─────────────────────────────────────────────────────────────────────────┐
-│                        INFRASTRUCTURE LAYER                              │
-│  ┌──────────────────────────┐    ┌──────────────────────────┐          │
-│  │   EF Core Repositories   │    │    External Services     │          │
-│  │  • EfProductRepository   │    │  • KeycloakService       │          │
-│  │  • EfAuditLogRepository  │    │  • LdapService           │          │
-│  └──────────────────────────┘    └──────────────────────────┘          │
-│                                                                         │
-│  ┌──────────────────────────┐    ┌──────────────────────────┐          │
-│  │   Domain Event Handlers  │    │     Persistence          │          │
-│  │  • AuditEventHandler     │    │  • ProductDbContext      │          │
-│  │  • AuthEventHandler      │    │  • AuditDbContext        │          │
-│  └──────────────────────────┘    └──────────────────────────┘          │
-└─────────────────────────────────────────────────────────────────────────┘
+```mermaid
+graph TB
+    subgraph Presentation["PRESENTATION LAYER (Api)"]
+        Controllers["Controllers / Middleware / DTOs<br/>ProductCommandController / ProductQueryController<br/>AuthenticationController / AuditController"]
+    end
+
+    subgraph Application["APPLICATION LAYER"]
+        subgraph CQRS["CQRS Pattern"]
+            Commands["Commands<br/>CreateProductCommand<br/>UpdateProductCommand<br/>DeleteProductCommand"]
+            Queries["Queries<br/>GetProductByIdQuery<br/>ListProductsQuery<br/>GetAuditLogsQuery"]
+        end
+        Pipeline["MediatR Pipeline<br/>Logging / Validation / Transaction Behavior"]
+    end
+
+    subgraph Domain["DOMAIN LAYER"]
+        subgraph Core["Core Domain"]
+            Aggregates["Aggregates<br/>Product: Create / Update / Delete"]
+            ValueObjects["Value Objects<br/>ProductId / ProductCode / Money"]
+        end
+        subgraph DomainAbstraction["Abstractions"]
+            DomainEvents["Domain Events<br/>ProductCreated / ProductUpdated / ProductDeleted"]
+            Ports["Interfaces - Ports<br/>IProductRepository / IAuditLogRepository / ITenantContext"]
+        end
+    end
+
+    subgraph Infrastructure["INFRASTRUCTURE LAYER"]
+        subgraph Adapters["Adapters"]
+            Repositories["EF Core Repositories<br/>EfProductRepository / EfAuditLogRepository"]
+            ExternalServices["External Services<br/>KeycloakService / LdapService"]
+        end
+        subgraph Handlers["Event & Persistence"]
+            EventHandlers["Domain Event Handlers<br/>AuditEventHandler / AuthEventHandler"]
+            Persistence["Persistence<br/>ProductDbContext / AuditDbContext"]
+        end
+    end
+
+    Controllers --> Commands
+    Controllers --> Queries
+    Commands --> Pipeline
+    Queries --> Pipeline
+    Pipeline --> Aggregates
+    Aggregates --> DomainEvents
+    Aggregates --> ValueObjects
+
+    Repositories -.->|implements| Ports
+    ExternalServices -.->|implements| Ports
+    EventHandlers --> DomainEvents
+
+    style Domain fill:#90EE90,stroke:#228B22
+    style Application fill:#87CEEB,stroke:#4169E1
+    style Infrastructure fill:#FFE4B5,stroke:#FF8C00
+    style Presentation fill:#DDA0DD,stroke:#8B008B
 ```
 
 ---
@@ -234,60 +229,58 @@
 
 ## 資料模型 (ER Diagram)
 
+```mermaid
+erDiagram
+    products {
+        UUID id PK "PRIMARY KEY"
+        VARCHAR product_code UK "P + 6 digits"
+        VARCHAR name "NOT NULL"
+        DECIMAL price "NOT NULL, > 0"
+        VARCHAR category "NOT NULL"
+        TEXT description
+        VARCHAR status "ACTIVE, INACTIVE, DELETED"
+        VARCHAR tenant_id FK "多租戶隔離"
+        VARCHAR created_by "NOT NULL"
+        TIMESTAMPTZ created_at "NOT NULL"
+        VARCHAR updated_by
+        TIMESTAMPTZ updated_at
+    }
+
+    audit_logs {
+        UUID id PK "PRIMARY KEY"
+        TIMESTAMPTZ timestamp "NOT NULL"
+        VARCHAR event_type "NOT NULL"
+        VARCHAR aggregate_type "NOT NULL"
+        VARCHAR aggregate_id "NOT NULL"
+        VARCHAR username "NOT NULL"
+        VARCHAR service_name "NOT NULL"
+        VARCHAR action "CREATE, UPDATE, DELETE"
+        JSONB payload "NOT NULL"
+        VARCHAR result "SUCCESS, FAILURE"
+        TEXT error_message
+        VARCHAR client_ip "IPv4/IPv6"
+        VARCHAR correlation_id "NOT NULL"
+        BOOLEAN payload_truncated "DEFAULT FALSE"
+    }
+
+    products ||--o{ audit_logs : "generates Domain Events"
 ```
-┌─────────────────────────────────────────────────────────────────────────┐
-│                              products                                    │
-├─────────────────────────────────────────────────────────────────────────┤
-│ id              UUID          PK                                        │
-│ product_code    VARCHAR(10)   UK    "P" + 6 digits                      │
-│ name            VARCHAR(255)  NOT NULL                                  │
-│ price           DECIMAL(19,4) NOT NULL  > 0                             │
-│ category        VARCHAR(100)  NOT NULL                                  │
-│ description     TEXT                                                    │
-│ status          VARCHAR(20)   NOT NULL  (ACTIVE, INACTIVE, DELETED)     │
-│ tenant_id       VARCHAR(50)   NOT NULL  FK → implicit tenant filter     │
-│ created_by      VARCHAR(100)  NOT NULL                                  │
-│ created_at      TIMESTAMPTZ   NOT NULL                                  │
-│ updated_by      VARCHAR(100)                                            │
-│ updated_at      TIMESTAMPTZ                                             │
-├─────────────────────────────────────────────────────────────────────────┤
-│ INDEXES:                                                                 │
-│   pk_products          (id) PRIMARY KEY                                 │
-│   uk_products_code     (product_code) UNIQUE                            │
-│   idx_products_tenant  (tenant_id)                                      │
-│   idx_products_category (category)                                      │
-│   idx_products_status  (status)                                         │
-└─────────────────────────────────────────────────────────────────────────┘
-                                   │
-                                   │ generates Domain Events
-                                   ▼
-┌─────────────────────────────────────────────────────────────────────────┐
-│                             audit_logs                                   │
-├─────────────────────────────────────────────────────────────────────────┤
-│ id               UUID          PK                                       │
-│ timestamp        TIMESTAMPTZ   NOT NULL                                 │
-│ event_type       VARCHAR(50)   NOT NULL                                 │
-│ aggregate_type   VARCHAR(50)   NOT NULL                                 │
-│ aggregate_id     VARCHAR(100)  NOT NULL                                 │
-│ username         VARCHAR(100)  NOT NULL                                 │
-│ service_name     VARCHAR(50)   NOT NULL                                 │
-│ action           VARCHAR(50)   NOT NULL  (CREATE, UPDATE, DELETE, etc.) │
-│ payload          JSONB         NOT NULL                                 │
-│ result           VARCHAR(20)   NOT NULL  (SUCCESS, FAILURE)             │
-│ error_message    TEXT                                                   │
-│ client_ip        VARCHAR(45)             IPv4/IPv6                      │
-│ correlation_id   VARCHAR(100)  NOT NULL                                 │
-│ payload_truncated BOOLEAN      DEFAULT FALSE                            │
-├─────────────────────────────────────────────────────────────────────────┤
-│ INDEXES:                                                                 │
-│   pk_audit_logs         (id) PRIMARY KEY                                │
-│   idx_audit_timestamp   (timestamp DESC)                                │
-│   idx_audit_username    (username, timestamp DESC)                      │
-│   idx_audit_aggregate   (aggregate_type, aggregate_id, timestamp DESC)  │
-│   idx_audit_event_type  (event_type, timestamp DESC)                    │
-│   idx_audit_correlation (correlation_id)                                │
-└─────────────────────────────────────────────────────────────────────────┘
-```
+
+### 索引設計
+
+| 資料表 | 索引名稱 | 欄位 |
+|--------|----------|------|
+| products | pk_products | (id) PRIMARY KEY |
+| products | uk_products_code | (product_code) UNIQUE |
+| products | idx_products_tenant | (tenant_id) |
+| products | idx_products_category | (category) |
+| products | idx_products_status | (status) |
+| audit_logs | pk_audit_logs | (id) PRIMARY KEY |
+| audit_logs | idx_audit_timestamp | (timestamp DESC) |
+| audit_logs | idx_audit_username | (username, timestamp DESC) |
+| audit_logs | idx_audit_aggregate | (aggregate_type, aggregate_id, timestamp DESC) |
+| audit_logs | idx_audit_event_type | (event_type, timestamp DESC) |
+| audit_logs | idx_audit_correlation | (correlation_id) |
 
 ---
 
@@ -295,88 +288,105 @@
 
 ### Domain Layer 類別圖
 
-```
-┌──────────────────────────────────────────────────────────────────────────┐
-│                              <<interface>>                                │
-│                              IDomainEvent                                 │
-├──────────────────────────────────────────────────────────────────────────┤
-│ + EventId: Guid                                                          │
-│ + OccurredAt: DateTimeOffset                                             │
-│ + EventType: string                                                      │
-└──────────────────────────────────────────────────────────────────────────┘
-                                    △
-                                    │
-┌──────────────────────────────────────────────────────────────────────────┐
-│                           <<abstract record>>                             │
-│                            DomainEventBase                                │
-├──────────────────────────────────────────────────────────────────────────┤
-│ + EventId: Guid = Guid.NewGuid()                                         │
-│ + OccurredAt: DateTimeOffset = DateTimeOffset.UtcNow                     │
-│ + abstract EventType: string                                             │
-└──────────────────────────────────────────────────────────────────────────┘
-                                    △
-         ┌──────────────────────────┼──────────────────────────┐
-         │                          │                          │
-┌─────────────────┐     ┌─────────────────┐     ┌─────────────────┐
-│ ProductCreated  │     │ ProductUpdated  │     │ ProductDeleted  │
-├─────────────────┤     ├─────────────────┤     ├─────────────────┤
-│ + ProductId     │     │ + ProductId     │     │ + ProductId     │
-│ + ProductCode   │     │ + Name          │     │ + DeletedBy     │
-│ + Name          │     │ + Price         │     ├─────────────────┤
-│ + Price         │     │ + Category      │     │ EventType =     │
-│ + Category      │     │ + UpdatedBy     │     │ "PRODUCT_DELETED"│
-│ + TenantId      │     ├─────────────────┤     └─────────────────┘
-│ + CreatedBy     │     │ EventType =     │
-├─────────────────┤     │ "PRODUCT_UPDATED"│
-│ EventType =     │     └─────────────────┘
-│ "PRODUCT_CREATED"│
-└─────────────────┘
+```mermaid
+classDiagram
+    class IDomainEvent {
+        <<interface>>
+        +Guid EventId
+        +DateTimeOffset OccurredAt
+        +string EventType
+    }
 
-┌──────────────────────────────────────────────────────────────────────────┐
-│                          <<abstract class>>                               │
-│                        AggregateRoot<TId>                                 │
-├──────────────────────────────────────────────────────────────────────────┤
-│ + Id: TId                                                                │
-│ + DomainEvents: IReadOnlyCollection<IDomainEvent>                        │
-├──────────────────────────────────────────────────────────────────────────┤
-│ # RegisterDomainEvent(event: IDomainEvent): void                         │
-│ + PullDomainEvents(): IReadOnlyCollection<IDomainEvent>                  │
-│ + ClearDomainEvents(): void                                              │
-└──────────────────────────────────────────────────────────────────────────┘
-                                    △
-                                    │
-┌──────────────────────────────────────────────────────────────────────────┐
-│                               Product                                     │
-├──────────────────────────────────────────────────────────────────────────┤
-│ + Id: ProductId                                                          │
-│ + ProductCode: ProductCode                                               │
-│ + Name: string                                                           │
-│ + Price: Money                                                           │
-│ + Category: string                                                       │
-│ + Description: string?                                                   │
-│ + Status: ProductStatus                                                  │
-│ + TenantId: string                                                       │
-│ + CreatedBy: string                                                      │
-│ + CreatedAt: DateTimeOffset                                              │
-│ + UpdatedBy: string?                                                     │
-│ + UpdatedAt: DateTimeOffset?                                             │
-├──────────────────────────────────────────────────────────────────────────┤
-│ + static Create(...): Product                                            │
-│ + Update(...): void                                                      │
-│ + Delete(deletedBy: string): void                                        │
-│ + Activate(activatedBy: string): void                                    │
-│ + Deactivate(deactivatedBy: string): void                                │
-└──────────────────────────────────────────────────────────────────────────┘
+    class DomainEventBase {
+        <<abstract>>
+        +Guid EventId
+        +DateTimeOffset OccurredAt
+        +string EventType*
+    }
 
-┌─────────────────────┐     ┌─────────────────────┐     ┌─────────────────────┐
-│  <<value object>>   │     │  <<value object>>   │     │  <<value object>>   │
-│     ProductId       │     │    ProductCode      │     │       Money         │
-├─────────────────────┤     ├─────────────────────┤     ├─────────────────────┤
-│ + Value: Guid       │     │ + Value: string     │     │ + Amount: decimal   │
-├─────────────────────┤     ├─────────────────────┤     ├─────────────────────┤
-│ + static Create()   │     │ + static Generate() │     │ + static Create()   │
-│ + static Create(id) │     │ + static Create(v)  │     │   throws if ≤ 0     │
-└─────────────────────┘     └─────────────────────┘     └─────────────────────┘
+    class ProductCreated {
+        +Guid ProductId
+        +string ProductCode
+        +string Name
+        +decimal Price
+        +string Category
+        +string TenantId
+        +string CreatedBy
+        +string EventType = "PRODUCT_CREATED"
+    }
+
+    class ProductUpdated {
+        +Guid ProductId
+        +string Name
+        +decimal Price
+        +string Category
+        +string UpdatedBy
+        +string EventType = "PRODUCT_UPDATED"
+    }
+
+    class ProductDeleted {
+        +Guid ProductId
+        +string DeletedBy
+        +string EventType = "PRODUCT_DELETED"
+    }
+
+    class AggregateRoot~TId~ {
+        <<abstract>>
+        +TId Id
+        +IReadOnlyCollection~IDomainEvent~ DomainEvents
+        #RegisterDomainEvent(IDomainEvent event)
+        +PullDomainEvents() IReadOnlyCollection~IDomainEvent~
+        +ClearDomainEvents()
+    }
+
+    class Product {
+        +ProductId Id
+        +ProductCode ProductCode
+        +string Name
+        +Money Price
+        +string Category
+        +string Description
+        +ProductStatus Status
+        +string TenantId
+        +string CreatedBy
+        +DateTimeOffset CreatedAt
+        +string UpdatedBy
+        +DateTimeOffset UpdatedAt
+        +Create()$ Product
+        +Update()
+        +Delete(string deletedBy)
+        +Activate(string activatedBy)
+        +Deactivate(string deactivatedBy)
+    }
+
+    class ProductId {
+        <<value object>>
+        +Guid Value
+        +Create()$ ProductId
+        +Create(Guid id)$ ProductId
+    }
+
+    class ProductCode {
+        <<value object>>
+        +string Value
+        +Generate()$ ProductCode
+        +Create(string value)$ ProductCode
+    }
+
+    class Money {
+        <<value object>>
+        +decimal Amount
+        +Create(decimal amount)$ Money
+    }
+
+    IDomainEvent <|.. DomainEventBase
+    DomainEventBase <|-- ProductCreated
+    DomainEventBase <|-- ProductUpdated
+    DomainEventBase <|-- ProductDeleted
+    AggregateRoot <|-- Product
+    Product *-- ProductId
+    Product *-- ProductCode
+    Product *-- Money
 ```
 
 ---
@@ -385,105 +395,58 @@
 
 ### 商品建立流程 (含 Domain Events 稽核)
 
-```
-┌────────┐     ┌───────────┐     ┌─────────┐     ┌─────────┐     ┌───────────┐     ┌──────────┐
-│Client  │     │Controller │     │Handler  │     │Product  │     │MediatR    │     │AuditHandler│
-└───┬────┘     └─────┬─────┘     └────┬────┘     └────┬────┘     └─────┬─────┘     └─────┬────┘
-    │               │                 │               │                │                 │
-    │ POST /products│                 │               │                │                 │
-    │──────────────▶│                 │               │                │                 │
-    │               │                 │               │                │                 │
-    │               │  Send Command   │               │                │                 │
-    │               │────────────────▶│               │                │                 │
-    │               │                 │               │                │                 │
-    │               │                 │ Create()      │                │                 │
-    │               │                 │──────────────▶│                │                 │
-    │               │                 │               │                │                 │
-    │               │                 │               │ RegisterEvent  │                 │
-    │               │                 │               │ (ProductCreated)                 │
-    │               │                 │               │────────┐       │                 │
-    │               │                 │               │        │       │                 │
-    │               │                 │               │◀───────┘       │                 │
-    │               │                 │               │                │                 │
-    │               │                 │◀──────────────│                │                 │
-    │               │                 │  product      │                │                 │
-    │               │                 │               │                │                 │
-    │               │                 │ Save to DB    │                │                 │
-    │               │                 │───────────────│                │                 │
-    │               │                 │               │                │                 │
-    │               │                 │ PullDomainEvents()             │                 │
-    │               │                 │──────────────▶│                │                 │
-    │               │                 │               │                │                 │
-    │               │                 │◀──────────────│                │                 │
-    │               │                 │  events[]     │                │                 │
-    │               │                 │               │                │                 │
-    │               │                 │ Publish(ProductCreated)        │                 │
-    │               │                 │───────────────────────────────▶│                 │
-    │               │                 │               │                │                 │
-    │               │                 │               │                │ Handle()        │
-    │               │                 │               │                │────────────────▶│
-    │               │                 │               │                │                 │
-    │               │                 │               │                │                 │ Create
-    │               │                 │               │                │                 │ AuditLog
-    │               │                 │               │                │                 │────┐
-    │               │                 │               │                │                 │    │
-    │               │                 │               │                │                 │◀───┘
-    │               │                 │               │                │                 │
-    │               │                 │               │                │◀────────────────│
-    │               │                 │               │                │                 │
-    │               │                 │◀──────────────────────────────│                 │
-    │               │                 │               │                │                 │
-    │               │◀────────────────│               │                │                 │
-    │               │  201 Created    │               │                │                 │
-    │◀──────────────│                 │               │                │                 │
-    │               │                 │               │                │                 │
+```mermaid
+sequenceDiagram
+    autonumber
+    participant C as Client
+    participant Ctrl as Controller
+    participant H as Handler
+    participant P as Product
+    participant M as MediatR
+    participant AH as AuditHandler
+
+    C->>Ctrl: POST /products
+    Ctrl->>H: Send CreateProductCommand
+    H->>P: Create()
+    P->>P: RegisterEvent(ProductCreated)
+    P-->>H: return product
+    H->>H: Save to DB
+    H->>P: PullDomainEvents()
+    P-->>H: return events[]
+    H->>M: Publish(ProductCreated)
+    M->>AH: Handle()
+    AH->>AH: Create AuditLog
+    AH-->>M: completed
+    M-->>H: completed
+    H-->>Ctrl: ProductDto
+    Ctrl-->>C: 201 Created
 ```
 
 ### OAuth2 認證流程
 
-```
-┌────────┐     ┌─────────┐     ┌──────────┐     ┌─────────────┐
-│ Client │     │ Gateway │     │ Keycloak │     │ Microservice│
-└───┬────┘     └────┬────┘     └─────┬────┘     └──────┬──────┘
-    │               │                │                  │
-    │ 1. Access Resource            │                  │
-    │──────────────▶│                │                  │
-    │               │                │                  │
-    │ 2. 302 Redirect to Keycloak   │                  │
-    │◀──────────────│                │                  │
-    │               │                │                  │
-    │ 3. Login Page │                │                  │
-    │───────────────────────────────▶│                  │
-    │               │                │                  │
-    │               │ 4. Authenticate│                  │
-    │               │                │◀──── LDAP ─────▶│
-    │               │                │                  │
-    │ 5. Authorization Code         │                  │
-    │◀──────────────────────────────│                  │
-    │               │                │                  │
-    │ 6. Code      │                │                  │
-    │──────────────▶│                │                  │
-    │               │                │                  │
-    │               │ 7. Exchange Token                │
-    │               │───────────────▶│                  │
-    │               │                │                  │
-    │               │ 8. JWT Token   │                  │
-    │               │◀───────────────│                  │
-    │               │                │                  │
-    │ 9. Access with JWT            │                  │
-    │──────────────▶│                │                  │
-    │               │                │                  │
-    │               │ 10. Forward Request (JWT Header) │
-    │               │─────────────────────────────────▶│
-    │               │                │                  │
-    │               │                │     11. Validate │
-    │               │                │         JWT     │
-    │               │                │                  │
-    │               │ 12. Response   │                  │
-    │               │◀─────────────────────────────────│
-    │               │                │                  │
-    │ 13. Response  │                │                  │
-    │◀──────────────│                │                  │
+```mermaid
+sequenceDiagram
+    autonumber
+    participant C as Client
+    participant GW as Gateway
+    participant KC as Keycloak
+    participant LDAP as LDAP
+    participant MS as Microservice
+
+    C->>GW: Access Resource
+    GW-->>C: 302 Redirect to Keycloak
+    C->>KC: Login Page
+    KC->>LDAP: Authenticate
+    LDAP-->>KC: User Info
+    KC-->>C: Authorization Code
+    C->>GW: Code
+    GW->>KC: Exchange Token
+    KC-->>GW: JWT Token
+    C->>GW: Access with JWT
+    GW->>MS: Forward Request (JWT Header)
+    MS->>MS: Validate JWT
+    MS-->>GW: Response
+    GW-->>C: Response
 ```
 
 ---
