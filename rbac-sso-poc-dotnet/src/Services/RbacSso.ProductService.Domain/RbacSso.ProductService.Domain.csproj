@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <RootNamespace>RbacSso.ProductService.Domain</RootNamespace>
+    <Description>
+      Product Service Domain Layer - 產品服務領域層
+      Contains: Entities, Value Objects, Domain Events, Domain Services
+      Dependencies: NONE (Pure Domain Model)
+    </Description>
+  </PropertyGroup>
+
+  <!--
+    Domain Layer 不應該有任何外部依賴
+    No external dependencies allowed - Pure Domain Model
+  -->
+
+</Project>

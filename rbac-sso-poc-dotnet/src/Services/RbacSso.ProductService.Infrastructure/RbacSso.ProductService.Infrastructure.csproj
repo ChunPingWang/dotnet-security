@@ -1,0 +1,25 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <RootNamespace>RbacSso.ProductService.Infrastructure</RootNamespace>
+    <Description>
+      Product Service Infrastructure Layer - 產品服務基礎設施層
+      Contains: Repositories, DbContext, External Service Adapters
+      Dependencies: Application Layer (implements Ports)
+    </Description>
+  </PropertyGroup>
+
+  <!--
+    Infrastructure Layer 依賴 Application Layer
+    Implements Adapters for Ports defined in Application Layer
+  -->
+  <ItemGroup>
+    <ProjectReference Include="..\RbacSso.ProductService.Application\RbacSso.ProductService.Application.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="8.0.0" />
+    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="8.0.0" />
+  </ItemGroup>
+
+</Project>

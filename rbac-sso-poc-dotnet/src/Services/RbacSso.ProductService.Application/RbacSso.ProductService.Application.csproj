@@ -1,0 +1,20 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <RootNamespace>RbacSso.ProductService.Application</RootNamespace>
+    <Description>
+      Product Service Application Layer - 產品服務應用層
+      Contains: Use Cases, Commands, Queries, DTOs, Port Interfaces
+      Dependencies: Domain Layer Only
+    </Description>
+  </PropertyGroup>
+
+  <!--
+    Application Layer 只依賴 Domain Layer
+    Defines Ports (Interfaces) - NOT implementations
+  -->
+  <ItemGroup>
+    <ProjectReference Include="..\RbacSso.ProductService.Domain\RbacSso.ProductService.Domain.csproj" />
+  </ItemGroup>
+
+</Project>

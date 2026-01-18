@@ -1,0 +1,32 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <RootNamespace>RbacSso.ProductService.Api</RootNamespace>
+    <Description>
+      Product Service API Layer - 產品服務 API 層 (Composition Root)
+      Contains: Controllers, DI Configuration, Middleware
+      Dependencies: All layers (assembles the application)
+    </Description>
+  </PropertyGroup>
+
+  <!--
+    API Layer (Composition Root) 組裝所有層
+    Responsible for Dependency Injection configuration
+  -->
+  <ItemGroup>
+    <ProjectReference Include="..\RbacSso.ProductService.Domain\RbacSso.ProductService.Domain.csproj" />
+    <ProjectReference Include="..\RbacSso.ProductService.Application\RbacSso.ProductService.Application.csproj" />
+    <ProjectReference Include="..\RbacSso.ProductService.Infrastructure\RbacSso.ProductService.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\Shared\RbacSso.Common\RbacSso.Common.csproj" />
+    <ProjectReference Include="..\..\Shared\RbacSso.Security\RbacSso.Security.csproj" />
+    <ProjectReference Include="..\..\Shared\RbacSso.Tenant\RbacSso.Tenant.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="MediatR" Version="12.2.0" />
+    <PackageReference Include="FluentValidation.DependencyInjectionExtensions" Version="11.9.0" />
+    <PackageReference Include="Swashbuckle.AspNetCore" Version="6.5.0" />
+    <PackageReference Include="Serilog.AspNetCore" Version="8.0.0" />
+  </ItemGroup>
+
+</Project>
